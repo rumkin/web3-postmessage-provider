@@ -9,7 +9,8 @@
     this.notificationCallbacks = [];
 
     options = options || {};
-    this._customTimeout = options.timeout;
+    this._requestTimeout = options.requestTimeout || options.timeout;
+    this._handshakeTimeout = options.handshakeTimeout || options.timeout || 1000;
 
     this.isConnecting = true;
     this.port = null;
@@ -36,7 +37,7 @@
     timeout = setTimeout(function() {
       _this.isConnecting = false;
       window.removeEventListener('message', onMessage);
-    }, 1000);
+    }, this._handshakeTimeout);
 
     window.addEventListener('message', onMessage);
     window.postMessage({type: ETHEREUM_PROVIDER_REQUEST}, window.origin);
@@ -105,15 +106,15 @@
     var _this = this;
 
     // schedule triggering the error response if a custom timeout is set
-    if (this._customTimeout) {
+    if (this._requestTimeout) {
       setTimeout(function () {
         if (_this.responseCallbacks[id]) {
           _this.responseCallbacks[id](
-            new Error('CONNECTION TIMEOUT: timeout of ' + _this._customTimeout + ' ms achived')
+            new Error('CONNECTION TIMEOUT: timeout of ' + _this._requestTimeout + ' ms achived')
           );
           delete _this.responseCallbacks[id];
         }
-      }, this._customTimeout);
+      }, this._requestTimeout);
     }
   };
 
@@ -233,7 +234,7 @@
     return typeof value === 'function';
   }
 
-  if (typeof module.exports === 'object') {
+  if (typeof module === 'object' && typeof module.exports === 'object') {
     module.exports = PostMessageProvider;
   }
   else if (typeof define === 'function' && define.amd) {
